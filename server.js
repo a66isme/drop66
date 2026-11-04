@@ -8,7 +8,9 @@ const { WebSocketServer } = require('ws');
 const QRCode = require('qrcode');
 
 const PORT = process.env.PORT || 3000;
-const INDEX = path.join(__dirname, 'public', 'index.html');
+// Works whether the page files are in a 'public' folder or loose next to this file
+const PUB = fs.existsSync(path.join(__dirname, 'public')) ? path.join(__dirname, 'public') : __dirname;
+const INDEX = path.join(PUB, 'index.html');
 const ROOM_RE = /^[a-z0-9]{6,16}$/;
 
 const server = http.createServer(async (req, res) => {
@@ -32,7 +34,7 @@ const server = http.createServer(async (req, res) => {
 
   // Logo and favicon
   if (['/logo.png', '/favicon.png', '/wordmark.png'].includes(url.pathname)) {
-    fs.readFile(path.join(__dirname, 'public', url.pathname.slice(1)), (err, data) => {
+    fs.readFile(path.join(PUB, url.pathname.slice(1)), (err, data) => {
       if (err) {
         res.writeHead(404);
         return res.end('Not found');
