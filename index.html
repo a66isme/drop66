@@ -4,194 +4,327 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#030503">
+<meta name="theme-color" content="#04060c">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/logo.png">
 <title>drop66: Send Files Between Your Computer and Phone, No App</title>
 <meta name="description" content="Send photos and files from your phone to your computer, or back, on the same Wi-Fi. Scan one code with the phone's camera, no app and no account.">
 <style>
   :root {
-    --bg: #030503;
-    --panel: #0b120b;
-    --ink: #f4fff4;
-    --soft: #8fa58f;
-    --line: #1f3a1f;
-    --green: #2dff2d;
-    --green-soft: #9dff8a;
-    --green-deep: #0a8f0a;
-    --bad: #ff6b5e;
+    --bg: #04060c;
+    --ink: #f3f6ff;
+    --soft: #9aa8c2;
+    --blue: #8fb0ec;
+    --blue-deep: #4f73bd;
+    --line: rgba(143, 176, 236, 0.28);
+    --panel: rgba(143, 176, 236, 0.06);
+    --ok: #6ee7a0;
+    --bad: #ff7b72;
     --font: ui-rounded, "SF Pro Rounded", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; background: var(--bg); }
   body {
     margin: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 50% -10%, rgba(45,255,45,0.14), transparent 70%),
-      var(--bg);
+    background: var(--bg);
     color: var(--ink);
     font-family: var(--font);
     font-size: 17px;
     line-height: 1.5;
     min-height: 100vh;
+    overflow-x: hidden;
   }
-  main { max-width: 880px; margin: 0 auto; padding: 40px 20px 64px; }
+  [hidden] { display: none !important; }
 
-  .brand { display: flex; align-items: center; gap: 18px; }
-  .brand img {
-    width: clamp(64px, 14vw, 96px);
-    height: auto;
-    border-radius: 22%;
-    box-shadow: 0 0 28px rgba(45,255,45,0.35);
-    flex: none;
+  /* ---------- moving background ---------- */
+  .bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  .glow {
+    position: absolute;
+    left: 50%; top: 40%;
+    width: 70vw; height: 42vw;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, rgba(93, 130, 214, 0.20), transparent);
+    animation: breathe 9s ease-in-out infinite alternate;
   }
-  h1 { margin: 0; line-height: 0; }
-  .wordmark { display: block; height: auto; width: clamp(200px, 52vw, 440px); filter: drop-shadow(0 0 18px rgba(45,255,45,0.25)); }
-  .tag { margin: 14px 0 0; color: var(--soft); font-size: 19px; max-width: 34ch; }
+  .arc {
+    position: absolute;
+    width: 92vw; height: 92vw;
+    border-radius: 50%;
+    border: 1.5px solid rgba(143, 176, 236, 0.34);
+    box-shadow: 0 0 110px rgba(93, 130, 214, 0.42), inset 0 0 170px rgba(93, 130, 214, 0.22);
+  }
+  /* a bright light that travels around the rim of each circle */
+  .arc::before {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 52%, rgba(170, 198, 255, 0.95) 76%, transparent 84% 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    animation: spin 13s linear infinite;
+  }
+  .a1 { right: -54vw; top: -76vw; animation: drift1 18s ease-in-out infinite alternate; }
+  .a2 { left: -54vw; bottom: -76vw; animation: drift2 22s ease-in-out infinite alternate; }
+  .a2::before { animation-duration: 17s; animation-direction: reverse; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes drift1 { to { transform: translate(-4vw, 5vw) scale(1.07); } }
+  @keyframes drift2 { to { transform: translate(5vw, -4vw) scale(1.07); } }
+  @keyframes breathe { from { opacity: 0.55; transform: translate(-50%, -50%) scale(0.92); } to { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } }
 
-  /* pairing */
-  #pair {
-    margin-top: 36px;
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 32px;
-    align-items: center;
+  /* ---------- layout ---------- */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 36px 20px 56px;
+    text-align: center;
   }
-  .ticket {
-    background: #fff;
-    border: 3px solid var(--green);
-    border-radius: 18px;
+  .brand { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .mark { width: 60px; height: auto; filter: drop-shadow(0 0 14px rgba(143, 176, 236, 0.45)); }
+  .wordmark { display: block; width: 190px; height: auto; }
+  h1 {
+    margin: 34px 0 0;
+    font-size: clamp(32px, 6.4vw, 54px);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .sub { margin: 14px auto 0; color: var(--soft); font-size: 19px; max-width: 60ch; }
+
+  .card {
+    margin: 36px auto 0;
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    padding: 28px;
+    text-align: left;
+    background: linear-gradient(180deg, rgba(143, 176, 236, 0.09), rgba(143, 176, 236, 0.02));
+    -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+  }
+
+  /* ---------- pairing ---------- */
+  #pair { display: grid; grid-template-columns: auto 1px 1fr; gap: 32px; align-items: center; }
+  .qrwrap {
     padding: 14px;
-    width: 260px;
-    height: 260px;
-    box-shadow: 0 0 34px rgba(45,255,45,0.35);
-  }
-  .ticket img { display: block; width: 100%; height: 100%; }
-  ol.steps { margin: 0; padding-left: 22px; }
-  ol.steps li { margin: 0 0 10px; }
-  ol.steps li::marker { color: var(--green); font-weight: 700; }
-  .link-row { margin-top: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .link-row code {
-    font-size: 14px;
-    color: var(--green-soft);
+    border-radius: 24px;
     background: var(--panel);
     border: 1px solid var(--line);
-    padding: 4px 8px;
-    border-radius: 8px;
-    word-break: break-all;
   }
+  .ticket {
+    width: 240px; height: 240px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 0 44px rgba(143, 176, 236, 0.50);
+  }
+  .ticket img { display: block; width: 100%; height: 100%; }
+  .divider { width: 1px; align-self: stretch; background: var(--line); }
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps li {
+    counter-increment: step;
+    display: flex; align-items: center; gap: 16px;
+    margin: 0 0 16px;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    flex: none;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--blue-deep);
+    color: #fff;
+    font-weight: 700;
+  }
+  .link-row { display: flex; gap: 12px; align-items: center; margin-top: 22px; }
+  .linkbox {
+    flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 15px;
+  }
+  .linkbox svg { flex: none; color: var(--soft); }
+  #link { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   button {
     font: inherit;
     cursor: pointer;
-    border: 2px solid var(--green);
-    background: transparent;
-    color: var(--green);
-    border-radius: 10px;
-    padding: 6px 14px;
+    border: 0;
+    border-radius: 12px;
+    padding: 11px 20px;
+    font-weight: 700;
+    background: var(--blue);
+    color: #07101f;
+    transition: background 0.15s;
   }
-  button:hover { background: rgba(45,255,45,0.12); }
-  :focus-visible { outline: 3px solid var(--green-soft); outline-offset: 3px; }
+  button:hover { background: #a9c3f2; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
-  /* status */
-  #status { margin-top: 28px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
-  #dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); flex: none; }
-  #status[data-kind="wait"] #dot { background: var(--green-soft); animation: pulse 1.4s ease-in-out infinite; }
-  #status[data-kind="ok"] #dot { background: var(--green); box-shadow: 0 0 12px var(--green); }
+  /* ---------- status with moving dots ---------- */
+  #status {
+    margin: 30px auto 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px;
+    font-size: 21px;
+    font-weight: 600;
+  }
+  #dot { position: relative; flex: none; width: 15px; height: 15px; border-radius: 50%; background: var(--line); }
+  #status[data-kind="wait"] #dot { background: var(--blue); }
+  #status[data-kind="wait"] #dot::after {
+    content: "";
+    position: absolute; inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--blue);
+    animation: ripple 1.7s ease-out infinite;
+  }
+  #status[data-kind="ok"] #dot { background: var(--ok); box-shadow: 0 0 14px var(--ok); }
   #status[data-kind="err"] #dot { background: var(--bad); }
   #status[data-kind="err"] #stext { color: var(--bad); }
-  @keyframes pulse { 50% { opacity: 0.25; } }
+  @keyframes ripple { from { transform: scale(1); opacity: 0.9; } to { transform: scale(2.8); opacity: 0; } }
+  .dots { display: none; align-items: center; gap: 5px; margin-left: -8px; }
+  #status[data-kind="wait"] .dots { display: inline-flex; }
+  .dots i {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue);
+    animation: hop 1.2s ease-in-out infinite;
+  }
+  .dots i:nth-child(2) { animation-delay: 0.16s; }
+  .dots i:nth-child(3) { animation-delay: 0.32s; }
+  @keyframes hop {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+    30% { transform: translateY(-7px); opacity: 1; }
+  }
 
-  /* transfer: the dashed box from the logo */
+  /* ---------- transfer ---------- */
   #drop {
-    margin-top: 20px;
-    border: 3px dashed var(--green-soft);
-    border-radius: 28px;
-    padding: 56px 20px;
+    display: block;
+    border: 2px dashed var(--blue);
+    border-radius: 20px;
+    padding: 52px 20px;
     text-align: center;
     cursor: pointer;
-    background: rgba(45,255,45,0.03);
+    background: var(--panel);
     transition: background 0.15s, box-shadow 0.15s;
   }
-  #drop:hover { background: rgba(45,255,45,0.07); }
-  #drop.over { background: rgba(45,255,45,0.14); border-color: var(--green); box-shadow: 0 0 34px rgba(45,255,45,0.35); }
-  #drop strong { display: block; font-size: 24px; }
-  #drop small { color: var(--soft); }
-  #list { list-style: none; margin: 20px 0 0; padding: 0; }
+  #drop:hover { background: rgba(143, 176, 236, 0.11); }
+  #drop.over { background: rgba(143, 176, 236, 0.20); box-shadow: 0 0 40px rgba(143, 176, 236, 0.35); }
+  #drop svg { color: var(--blue); }
+  #drop strong { display: block; margin-top: 8px; font-size: 23px; }
+  #drop small { color: var(--soft); font-size: 16px; }
+  #list { list-style: none; margin: 18px 0 0; padding: 0; }
+  #list:empty { display: none; }
   #list li {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 4px 12px;
     align-items: center;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.3);
   }
   .fname { font-weight: 600; word-break: break-all; }
-  .fmeta { grid-column: 1; color: var(--soft); font-size: 14px; }
+  .fmeta { color: var(--soft); font-size: 14px; }
   .fact { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 8px; align-items: center; }
   .fact a {
-    background: var(--green);
-    color: #031003;
-    font-weight: 700;
-    text-decoration: none;
-    padding: 6px 16px;
-    border-radius: 10px;
+    background: var(--blue); color: #07101f; font-weight: 700;
+    text-decoration: none; padding: 7px 16px; border-radius: 10px;
   }
-  .fact a:hover { background: var(--green-soft); }
-  .fact button { padding: 4px 10px; line-height: 1; border-color: var(--line); color: var(--soft); }
-  .fact button:hover { border-color: var(--bad); color: var(--bad); background: transparent; }
-  .bar { grid-column: 1 / -1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
-  .bar i { display: block; height: 100%; width: 0; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .fact a:hover { background: #a9c3f2; }
+  .fact button { background: transparent; color: var(--soft); border: 1px solid var(--line); padding: 3px 11px; line-height: 1.3; font-size: 18px; }
+  .fact button:hover { color: var(--bad); border-color: var(--bad); background: transparent; }
+  .bar { grid-column: 1 / -1; height: 6px; background: rgba(143, 176, 236, 0.18); border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--blue); box-shadow: 0 0 10px var(--blue); }
   li.done .bar { display: none; }
 
-  details { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 16px; }
-  summary { cursor: pointer; font-weight: 600; }
-  details ul { color: var(--soft); padding-left: 22px; }
-  .note { color: var(--soft); font-size: 15px; margin-top: 28px; max-width: 60ch; }
+  /* ---------- help ---------- */
+  details { max-width: 800px; margin: 40px auto 0; border-top: 1px solid var(--line); padding-top: 18px; text-align: left; }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: "";
+    width: 11px; height: 11px;
+    margin: 0 4px 4px 6px;
+    border-right: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    transform: rotate(45deg);
+    transition: transform 0.2s;
+  }
+  details[open] summary::before { transform: rotate(-135deg); margin-bottom: -4px; }
+  details ul { color: var(--soft); padding-left: 22px; margin-bottom: 0; }
+  .note { color: var(--soft); font-size: 14px; margin: 28px auto 0; max-width: 62ch; }
 
-  [hidden] { display: none !important; }
-
-  @media (max-width: 640px) {
-    #pair { grid-template-columns: 1fr; justify-items: start; }
-    .ticket { width: min(260px, 100%); height: auto; aspect-ratio: 1; }
+  @media (max-width: 720px) {
+    #pair { grid-template-columns: 1fr; justify-items: center; gap: 24px; }
+    .divider { display: none; }
+    .ticket { width: min(240px, 70vw); height: min(240px, 70vw); }
+    .card { padding: 20px; }
+    .link-row { flex-direction: column; align-items: stretch; width: 100%; }
+    ol.steps { width: 100%; }
+    .sub { font-size: 17px; }
+    #status { font-size: 18px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #status[data-kind="wait"] #dot { animation: none; }
-    #drop { transition: none; }
+    .glow, .arc, .arc::before, .dots i, #status[data-kind="wait"] #dot::after { animation: none; }
+    .dots i { opacity: 0.8; }
   }
 </style>
 </head>
 <body>
+<div class="bg" aria-hidden="true">
+  <span class="glow"></span>
+  <span class="arc a1"></span>
+  <span class="arc a2"></span>
+</div>
+
 <main>
   <div class="brand">
-    <img src="/logo.png" alt="" width="96" height="96">
-    <h1><img class="wordmark" src="/wordmark.png" alt="drop66" width="900" height="260"></h1>
+    <svg class="mark" viewBox="0 0 64 42" aria-hidden="true">
+      <defs>
+        <linearGradient id="mk" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#c3d5f8"/>
+          <stop offset="1" stop-color="#6f93dd"/>
+        </linearGradient>
+      </defs>
+      <path d="M17 3h40.5a4.5 4.5 0 0 1 4.4 5.5l-6 26A4.5 4.5 0 0 1 51.500 38.500H8.500A4.500 4.500 0 0 1 4.100 33L12.600 6.500A4.500 4.500 0 0 1 17 3z" fill="url(#mk)"/>
+    </svg>
+    <img class="wordmark" src="/wordmark.png" alt="drop66" width="900" height="260">
   </div>
-  <p class="tag">Computer ⇄ phone, on the same Wi-Fi. Scan once, send both ways.</p>
 
-  <section id="pair" hidden>
-    <div class="ticket"><img id="qr" alt="QR code that connects your phone"></div>
+  <h1 id="title">Connect your devices</h1>
+  <p class="sub" id="sub">Pair your computer and phone on the same Wi-Fi to transfer files, instantly.</p>
+
+  <section id="pair" class="card" hidden>
+    <div class="qrwrap"><div class="ticket"><img id="qr" alt="QR code that connects your phone"></div></div>
+    <div class="divider"></div>
     <div>
       <ol class="steps">
-        <li>Put both devices on the <strong>same Wi-Fi</strong>.</li>
-        <li>Point your phone's <strong>camera</strong> at the code and open the link.</li>
-        <li>Drop files on either device. They go to the other one.</li>
+        <li><span>Keep both devices on the <strong>same Wi-Fi</strong>.</span></li>
+        <li><span>Point your phone's <strong>camera</strong> at the code and open the link.</span></li>
+        <li><span>Choose files on either device to send.</span></li>
       </ol>
       <div class="link-row">
-        <code id="link"></code>
-        <button id="copy" type="button">Copy link</button>
+        <div class="linkbox">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.100.100l3-3a5 5 0 0 0-7.100-7.100l-1.700 1.700"/><path d="M14 11a5 5 0 0 0-7.100-.100l-3 3a5 5 0 0 0 7.100 7.100l1.700-1.700"/></svg>
+          <span id="link"></span>
+        </div>
+        <button id="copy" type="button">Copy Link</button>
       </div>
     </div>
   </section>
 
   <div id="status" data-kind="idle" role="status" aria-live="polite">
-    <span id="dot"></span><span id="stext">Starting…</span>
+    <span id="dot"></span><span id="stext">Starting</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
   </div>
 
-  <section id="transfer" hidden>
+  <section id="transfer" class="card" hidden>
     <div id="drop" tabindex="0" role="button" aria-label="Choose files to send">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
       <strong>Drop files here</strong>
       <small>or tap to choose. They go to the other device.</small>
     </div>
@@ -200,7 +333,7 @@
   </section>
 
   <details id="help">
-    <summary>Not connecting?</summary>
+    <summary>Need help?</summary>
     <ul>
       <li>Both devices on the same Wi-Fi, not mobile data.</li>
       <li>A home network, not a guest, café, hotel or office one.</li>
@@ -234,10 +367,16 @@
   const joinUrl = location.origin + '/?r=' + room;
 
   // ---- ui helpers ----
+  // The moving dots after the text only show while we are waiting.
   function setStatus(kind, text) {
     $('#status').dataset.kind = kind;
-    $('#stext').textContent = text;
+    $('#stext').textContent = text.replace(/(…|\.\.\.)$/, '');
   }
+  function setHead(title, sub) {
+    $('#title').textContent = title;
+    $('#sub').textContent = sub;
+  }
+  const HOST_HEAD = ['Connect your devices', 'Pair your computer and phone on the same Wi-Fi to transfer files, instantly.'];
   function showPair(on) { $('#pair').hidden = !on; }
   function showTransfer(on) { $('#transfer').hidden = !on; }
   function fmt(n) {
@@ -260,7 +399,7 @@
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/ws?room=${room}`);
     ws.onopen = () => {
-      setStatus('wait', isHost ? 'Waiting for your phone to scan the code…' : 'Looking for the computer…');
+      setStatus('wait', isHost ? 'Waiting for your phone to scan…' : 'Looking for the computer…');
     };
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
@@ -278,7 +417,8 @@
 
   async function onSignal(msg) {
     if (msg.t === 'full') {
-      setStatus('err', 'This code already has two devices. Scan a fresh code from the computer.');
+      setHead('This code is already in use', 'Scan a fresh code from the computer.');
+      setStatus('err', 'This code already has two devices.');
     } else if (msg.t === 'peer') {
       startPeer(msg.initiator);
     } else if (msg.t === 'sdp') {
@@ -342,12 +482,14 @@
     closePeer();
     showTransfer(false);
     if (isHost) {
+      setHead(HOST_HEAD[0], HOST_HEAD[1]);
       showPair(true);
       setStatus('wait', wasConnected
-        ? 'The other device left. Scan the code again to reconnect.'
-        : 'Waiting for your phone to scan the code…');
+        ? 'The other device left. Scan the code again…'
+        : 'Waiting for your phone to scan…');
     } else {
-      setStatus('err', 'Disconnected. Scan the code on the computer again.');
+      setHead('Disconnected', 'Scan the code on the computer again.');
+      setStatus('err', 'The connection closed.');
     }
   }
 
@@ -359,6 +501,7 @@
       clearTimeout(timer);
       showPair(false);
       showTransfer(true);
+      setHead("You're connected", 'Choose files on either device. They go straight to the other one.');
       setStatus('ok', 'Connected. Drop files on either device.');
     };
     ch.onclose = () => { if (connected) lost(); };
@@ -510,10 +653,12 @@
       try {
         await navigator.clipboard.writeText(joinUrl);
         $('#copy').textContent = 'Copied';
-        setTimeout(() => ($('#copy').textContent = 'Copy link'), 1500);
+        setTimeout(() => ($('#copy').textContent = 'Copy Link'), 1500);
       } catch (e) {}
     });
     showPair(true);
+  } else {
+    setHead('Joining your computer', 'Hold on while the two devices connect.');
   }
   openSocket();
 })();
