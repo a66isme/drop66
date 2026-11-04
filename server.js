@@ -41,7 +41,7 @@ const server = http.createServer(async (req, res) => {
       }
       res.writeHead(200, {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=86400',
+        'Cache-Control': 'no-cache',
       });
       res.end(data);
     });
