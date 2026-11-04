@@ -1,0 +1,16 @@
+{
+  "name": "drop",
+  "version": "1.0.0",
+  "description": "Send files between your computer and phone on the same Wi-Fi. Scan a code, no app.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.0"
+  }
+}
