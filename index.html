@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#030503">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<title>drop66: Send Files Between Your Computer and Phone, No App</title>
+<meta name="description" content="Send photos and files from your phone to your computer, or back, on the same Wi-Fi. Scan one code with the phone's camera, no app and no account.">
+<style>
+  :root {
+    --bg: #030503;
+    --panel: #0b120b;
+    --ink: #f4fff4;
+    --soft: #8fa58f;
+    --line: #1f3a1f;
+    --green: #2dff2d;
+    --green-soft: #9dff8a;
+    --green-deep: #0a8f0a;
+    --bad: #ff6b5e;
+    --font: ui-rounded, "SF Pro Rounded", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% -10%, rgba(45,255,45,0.14), transparent 70%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 17px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 40px 20px 64px; }
+
+  .brand { display: flex; align-items: center; gap: 18px; }
+  .brand img {
+    width: clamp(64px, 14vw, 96px);
+    height: auto;
+    border-radius: 22%;
+    box-shadow: 0 0 28px rgba(45,255,45,0.35);
+    flex: none;
+  }
+  h1 { margin: 0; line-height: 0; }
+  .wordmark { display: block; height: auto; width: clamp(200px, 52vw, 440px); filter: drop-shadow(0 0 18px rgba(45,255,45,0.25)); }
+  .tag { margin: 14px 0 0; color: var(--soft); font-size: 19px; max-width: 34ch; }
+
+  /* pairing */
+  #pair {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+    align-items: center;
+  }
+  .ticket {
+    background: #fff;
+    border: 3px solid var(--green);
+    border-radius: 18px;
+    padding: 14px;
+    width: 260px;
+    height: 260px;
+    box-shadow: 0 0 34px rgba(45,255,45,0.35);
+  }
+  .ticket img { display: block; width: 100%; height: 100%; }
+  ol.steps { margin: 0; padding-left: 22px; }
+  ol.steps li { margin: 0 0 10px; }
+  ol.steps li::marker { color: var(--green); font-weight: 700; }
+  .link-row { margin-top: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .link-row code {
+    font-size: 14px;
+    color: var(--green-soft);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 4px 8px;
+    border-radius: 8px;
+    word-break: break-all;
+  }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 2px solid var(--green);
+    background: transparent;
+    color: var(--green);
+    border-radius: 10px;
+    padding: 6px 14px;
+  }
+  button:hover { background: rgba(45,255,45,0.12); }
+  :focus-visible { outline: 3px solid var(--green-soft); outline-offset: 3px; }
+
+  /* status */
+  #status { margin-top: 28px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  #dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); flex: none; }
+  #status[data-kind="wait"] #dot { background: var(--green-soft); animation: pulse 1.4s ease-in-out infinite; }
+  #status[data-kind="ok"] #dot { background: var(--green); box-shadow: 0 0 12px var(--green); }
+  #status[data-kind="err"] #dot { background: var(--bad); }
+  #status[data-kind="err"] #stext { color: var(--bad); }
+  @keyframes pulse { 50% { opacity: 0.25; } }
+
+  /* transfer: the dashed box from the logo */
+  #drop {
+    margin-top: 20px;
+    border: 3px dashed var(--green-soft);
+    border-radius: 28px;
+    padding: 56px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(45,255,45,0.03);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  #drop:hover { background: rgba(45,255,45,0.07); }
+  #drop.over { background: rgba(45,255,45,0.14); border-color: var(--green); box-shadow: 0 0 34px rgba(45,255,45,0.35); }
+  #drop strong { display: block; font-size: 24px; }
+  #drop small { color: var(--soft); }
+  #list { list-style: none; margin: 20px 0 0; padding: 0; }
+  #list li {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    align-items: center;
+  }
+  .fname { font-weight: 600; word-break: break-all; }
+  .fmeta { grid-column: 1; color: var(--soft); font-size: 14px; }
+  .fact { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 8px; align-items: center; }
+  .fact a {
+    background: var(--green);
+    color: #031003;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 6px 16px;
+    border-radius: 10px;
+  }
+  .fact a:hover { background: var(--green-soft); }
+  .fact button { padding: 4px 10px; line-height: 1; border-color: var(--line); color: var(--soft); }
+  .fact button:hover { border-color: var(--bad); color: var(--bad); background: transparent; }
+  .bar { grid-column: 1 / -1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  li.done .bar { display: none; }
+
+  details { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 16px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details ul { color: var(--soft); padding-left: 22px; }
+  .note { color: var(--soft); font-size: 15px; margin-top: 28px; max-width: 60ch; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 640px) {
+    #pair { grid-template-columns: 1fr; justify-items: start; }
+    .ticket { width: min(260px, 100%); height: auto; aspect-ratio: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #status[data-kind="wait"] #dot { animation: none; }
+    #drop { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <img src="/logo.png" alt="" width="96" height="96">
+    <h1><img class="wordmark" src="/wordmark.png" alt="drop66" width="900" height="260"></h1>
+  </div>
+  <p class="tag">Computer ⇄ phone, on the same Wi-Fi. Scan once, send both ways.</p>
+
+  <section id="pair" hidden>
+    <div class="ticket"><img id="qr" alt="QR code that connects your phone"></div>
+    <div>
+      <ol class="steps">
+        <li>Put both devices on the <strong>same Wi-Fi</strong>.</li>
+        <li>Point your phone's <strong>camera</strong> at the code and open the link.</li>
+        <li>Drop files on either device. They go to the other one.</li>
+      </ol>
+      <div class="link-row">
+        <code id="link"></code>
+        <button id="copy" type="button">Copy link</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="status" data-kind="idle" role="status" aria-live="polite">
+    <span id="dot"></span><span id="stext">Starting…</span>
+  </div>
+
+  <section id="transfer" hidden>
+    <div id="drop" tabindex="0" role="button" aria-label="Choose files to send">
+      <strong>Drop files here</strong>
+      <small>or tap to choose. They go to the other device.</small>
+    </div>
+    <input id="file" type="file" multiple hidden>
+    <ul id="list"></ul>
+  </section>
+
+  <details id="help">
+    <summary>Not connecting?</summary>
+    <ul>
+      <li>Both devices on the same Wi-Fi, not mobile data.</li>
+      <li>A home network, not a guest, café, hotel or office one.</li>
+      <li>No VPN on either device.</li>
+      <li>On Windows, set the Wi-Fi to Private.</li>
+      <li>Keep both screens on while sending. Phones pause pages in the background.</li>
+    </ul>
+  </details>
+
+  <p class="note">This page only introduces the two devices. Files go straight between them, encrypted, and are never stored on a server. Files over 100 MB ask you first, because the receiving browser keeps each file in memory until you save it.</p>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const CHUNK = 16 * 1024;          // 16 KB works in every browser
+  const HIGH = 1024 * 1024;         // pause sending when 1 MB is waiting
+  const BIG = 100 * 1024 * 1024;    // ask before sending anything over 100 MB
+  const ROOM_RE = /^[a-z0-9]{6,16}$/;
+
+  // ---- who am I? ----
+  // No ?r= in the address = this device makes the code. With ?r= = it joined by scanning.
+  const params = new URLSearchParams(location.search);
+  let room = params.get('r');
+  const isHost = !room;
+  if (isHost) {
+    const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+    const rand = crypto.getRandomValues(new Uint8Array(8));
+    room = Array.from(rand, (x) => alphabet[x % alphabet.length]).join('');
+  }
+  const joinUrl = location.origin + '/?r=' + room;
+
+  // ---- ui helpers ----
+  function setStatus(kind, text) {
+    $('#status').dataset.kind = kind;
+    $('#stext').textContent = text;
+  }
+  function showPair(on) { $('#pair').hidden = !on; }
+  function showTransfer(on) { $('#transfer').hidden = !on; }
+  function fmt(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    if (n < 1024 * 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+    return (n / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+  }
+
+  // ---- state ----
+  let ws, pc, dc;
+  let connected = false;
+  let timer = null;
+  let signalQueue = Promise.resolve();
+  let sendQueue = Promise.resolve();
+  let incoming = null;
+
+  // ---- signaling ----
+  function openSocket() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws?room=${room}`);
+    ws.onopen = () => {
+      setStatus('wait', isHost ? 'Waiting for your phone to scan the code…' : 'Looking for the computer…');
+    };
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      signalQueue = signalQueue.then(() => onSignal(msg)).catch(console.error);
+    };
+    ws.onclose = () => {
+      if (!connected && !pc) {
+        setStatus('err', 'Lost contact with the server. Reload the page to try again.');
+      }
+    };
+  }
+  function sendSignal(obj) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+  }
+
+  async function onSignal(msg) {
+    if (msg.t === 'full') {
+      setStatus('err', 'This code already has two devices. Scan a fresh code from the computer.');
+    } else if (msg.t === 'peer') {
+      startPeer(msg.initiator);
+    } else if (msg.t === 'sdp') {
+      if (!pc) return;
+      await pc.setRemoteDescription(msg.d);
+      if (msg.d.type === 'offer') {
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        sendSignal({ t: 'sdp', d: pc.localDescription });
+      }
+    } else if (msg.t === 'ice') {
+      if (pc) {
+        try { await pc.addIceCandidate(msg.c); } catch (e) { console.warn(e); }
+      }
+    } else if (msg.t === 'left') {
+      lost();
+    }
+  }
+
+  // ---- WebRTC ----
+  function startPeer(initiator) {
+    closePeer();
+    pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    pc.onicecandidate = (e) => { if (e.candidate) sendSignal({ t: 'ice', c: e.candidate }); };
+    pc.onconnectionstatechange = () => {
+      if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) lost();
+    };
+
+    setStatus('wait', 'Connecting the two devices…');
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (!connected) {
+        setStatus('err', "Can't connect. Check the tips below, then scan again.");
+        $('#help').open = true;
+      }
+    }, 15000);
+
+    if (initiator) {
+      dc = pc.createDataChannel('files');
+      wireChannel(dc);
+      pc.createOffer()
+        .then((o) => pc.setLocalDescription(o))
+        .then(() => sendSignal({ t: 'sdp', d: pc.localDescription }))
+        .catch(console.error);
+    } else {
+      pc.ondatachannel = (e) => { dc = e.channel; wireChannel(dc); };
+    }
+  }
+
+  function closePeer() {
+    try { if (dc) dc.close(); } catch (e) {}
+    try { if (pc) pc.close(); } catch (e) {}
+    dc = null;
+    pc = null;
+  }
+
+  function lost() {
+    clearTimeout(timer);
+    const wasConnected = connected;
+    connected = false;
+    closePeer();
+    showTransfer(false);
+    if (isHost) {
+      showPair(true);
+      setStatus('wait', wasConnected
+        ? 'The other device left. Scan the code again to reconnect.'
+        : 'Waiting for your phone to scan the code…');
+    } else {
+      setStatus('err', 'Disconnected. Scan the code on the computer again.');
+    }
+  }
+
+  function wireChannel(ch) {
+    ch.binaryType = 'arraybuffer';
+    ch.bufferedAmountLowThreshold = 256 * 1024;
+    ch.onopen = () => {
+      connected = true;
+      clearTimeout(timer);
+      showPair(false);
+      showTransfer(true);
+      setStatus('ok', 'Connected. Drop files on either device.');
+    };
+    ch.onclose = () => { if (connected) lost(); };
+    ch.onmessage = onData;
+  }
+
+  // ---- receiving ----
+  function onData(e) {
+    if (typeof e.data === 'string') {
+      const m = JSON.parse(e.data);
+      if (m.t === 'file') {
+        const row = addRow(m.name, m.size, 'Receiving');
+        incoming = { m, row, chunks: [], got: 0 };
+      } else if (m.t === 'end' && incoming) {
+        const { m: meta, row, chunks } = incoming;
+        const blob = new Blob(chunks, { type: meta.mime || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = meta.name;
+        a.textContent = 'Save';
+        row.actions.prepend(a);
+        row.markDone('Received · ' + fmt(meta.size));
+        row.onRemove = () => URL.revokeObjectURL(url);
+        incoming = null;
+      }
+      return;
+    }
+    if (!incoming) return;
+    incoming.chunks.push(e.data);
+    incoming.got += e.data.byteLength;
+    incoming.row.setProgress(incoming.got / incoming.m.size, 'Receiving · ' + fmt(incoming.got) + ' of ' + fmt(incoming.m.size));
+  }
+
+  // ---- sending ----
+  function waitForRoom() {
+    return new Promise((resolve) => dc.addEventListener('bufferedamountlow', resolve, { once: true }));
+  }
+
+  async function sendFile(file) {
+    if (!dc || dc.readyState !== 'open') return;
+    const row = addRow(file.name, file.size, 'Sending');
+    try {
+      dc.send(JSON.stringify({ t: 'file', name: file.name, size: file.size, mime: file.type }));
+      let offset = 0;
+      while (offset < file.size) {
+        if (!dc || dc.readyState !== 'open') throw new Error('closed');
+        if (dc.bufferedAmount > HIGH) await waitForRoom();
+        const buf = await file.slice(offset, offset + CHUNK).arrayBuffer();
+        dc.send(buf);
+        offset += buf.byteLength;
+        row.setProgress(offset / file.size, 'Sending · ' + fmt(offset) + ' of ' + fmt(file.size));
+      }
+      dc.send(JSON.stringify({ t: 'end' }));
+      row.markDone('Sent · ' + fmt(file.size));
+    } catch (err) {
+      row.markDone('Failed. The connection closed.');
+    }
+  }
+
+  function queueFiles(files) {
+    if (!connected) {
+      setStatus('err', 'Not connected yet. Scan the code first.');
+      return;
+    }
+    for (const file of files) {
+      if (file.size > BIG && !confirm(`${file.name} is ${fmt(file.size)}.\n\nThe other device keeps each file in memory until it is saved, so a big file can fail. Send it anyway?`)) {
+        continue;
+      }
+      sendQueue = sendQueue.then(() => sendFile(file));
+    }
+  }
+
+  // ---- file list ----
+  function addRow(name, size, label) {
+    const li = document.createElement('li');
+    const nameEl = document.createElement('div');
+    nameEl.className = 'fname';
+    nameEl.textContent = name;
+    const meta = document.createElement('div');
+    meta.className = 'fmeta';
+    meta.textContent = label + ' · ' + fmt(size);
+    const actions = document.createElement('div');
+    actions.className = 'fact';
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.textContent = '×';
+    x.setAttribute('aria-label', 'Remove ' + name);
+    actions.append(x);
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const fill = document.createElement('i');
+    bar.append(fill);
+
+    const left = document.createElement('div');
+    left.append(nameEl, meta);
+    li.append(left, actions, bar);
+    $('#list').prepend(li);
+
+    const row = {
+      actions,
+      onRemove: null,
+      setProgress(p, text) {
+        fill.style.width = Math.round(p * 100) + '%';
+        meta.textContent = text;
+      },
+      markDone(text) {
+        li.classList.add('done');
+        meta.textContent = text;
+      },
+    };
+    x.onclick = () => {
+      if (row.onRemove) row.onRemove();
+      li.remove();
+    };
+    return row;
+  }
+
+  // ---- drop zone ----
+  const drop = $('#drop');
+  const input = $('#file');
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener('change', () => {
+    queueFiles(Array.from(input.files));
+    input.value = '';
+  });
+  ['dragenter', 'dragover'].forEach((ev) =>
+    drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((ev) =>
+    drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => queueFiles(Array.from(e.dataTransfer.files)));
+
+  // ---- start ----
+  if (!ROOM_RE.test(room)) {
+    setStatus('err', 'This link is not valid. Scan the code on the computer again.');
+    return;
+  }
+  if (!window.RTCPeerConnection) {
+    setStatus('err', 'This browser cannot send files directly. Try a recent Chrome, Safari or Firefox.');
+    return;
+  }
+  if (isHost) {
+    $('#qr').src = '/qr?u=' + encodeURIComponent(joinUrl);
+    $('#link').textContent = joinUrl;
+    $('#copy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(joinUrl);
+        $('#copy').textContent = 'Copied';
+        setTimeout(() => ($('#copy').textContent = 'Copy link'), 1500);
+      } catch (e) {}
+    });
+    showPair(true);
+  }
+  openSocket();
+})();
+</script>
+</body>
+</html>
