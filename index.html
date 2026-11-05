@@ -184,20 +184,6 @@
   #status[data-kind="err"] #dot { background: var(--bad); }
   #status[data-kind="err"] #stext { color: var(--bad); }
   @keyframes ripple { from { transform: scale(1); opacity: 0.9; } to { transform: scale(2.8); opacity: 0; } }
-  .dots { display: none; align-items: center; gap: 5px; margin-left: -8px; }
-  #status[data-kind="wait"] .dots { display: inline-flex; }
-  .dots i {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--blue);
-    animation: hop 1.2s ease-in-out infinite;
-  }
-  .dots i:nth-child(2) { animation-delay: 0.16s; }
-  .dots i:nth-child(3) { animation-delay: 0.32s; }
-  @keyframes hop {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
-    30% { transform: translateY(-7px); opacity: 1; }
-  }
 
   /* ---------- transfer ---------- */
   #drop {
@@ -242,22 +228,6 @@
   .bar i { display: block; height: 100%; width: 0; background: var(--blue); box-shadow: 0 0 10px var(--blue); }
   li.done .bar { display: none; }
 
-  /* ---------- help ---------- */
-  details { max-width: 800px; margin: 40px auto 0; border-top: 1px solid var(--line); padding-top: 18px; text-align: left; }
-  summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; }
-  summary::-webkit-details-marker { display: none; }
-  summary::before {
-    content: "";
-    width: 11px; height: 11px;
-    margin: 0 4px 4px 6px;
-    border-right: 2px solid var(--ink);
-    border-bottom: 2px solid var(--ink);
-    transform: rotate(45deg);
-    transition: transform 0.2s;
-  }
-  details[open] summary::before { transform: rotate(-135deg); margin-bottom: -4px; }
-  details ul { color: var(--soft); padding-left: 22px; margin-bottom: 0; }
-  .note { color: var(--soft); font-size: 14px; margin: 28px auto 0; max-width: 62ch; }
 
   @media (max-width: 720px) {
     #pair { grid-template-columns: 1fr; justify-items: center; gap: 24px; }
@@ -270,8 +240,7 @@
     #status { font-size: 18px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .glow, .arc, .arc::before, .dots i, #status[data-kind="wait"] #dot::after { animation: none; }
-    .dots i { opacity: 0.8; }
+    .glow, .arc, .arc::before, #status[data-kind="wait"] #dot::after { animation: none; }
   }
 </style>
 </head>
@@ -319,7 +288,7 @@
   </section>
 
   <div id="status" data-kind="idle" role="status" aria-live="polite">
-    <span id="dot"></span><span id="stext">Starting</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span id="dot"></span><span id="stext">Starting</span>
   </div>
 
   <section id="transfer" class="card" hidden>
@@ -332,18 +301,7 @@
     <ul id="list"></ul>
   </section>
 
-  <details id="help">
-    <summary>Need help?</summary>
-    <ul>
-      <li>Both devices on the same Wi-Fi, not mobile data.</li>
-      <li>A home network, not a guest, café, hotel or office one.</li>
-      <li>No VPN on either device.</li>
-      <li>On Windows, set the Wi-Fi to Private.</li>
-      <li>Keep both screens on while sending. Phones pause pages in the background.</li>
-    </ul>
-  </details>
 
-  <p class="note">This page only introduces the two devices. Files go straight between them, encrypted, and are never stored on a server. Files over 100 MB ask you first, because the receiving browser keeps each file in memory until you save it.</p>
 </main>
 
 <script>
@@ -367,7 +325,6 @@
   const joinUrl = location.origin + '/?r=' + room;
 
   // ---- ui helpers ----
-  // The moving dots after the text only show while we are waiting.
   function setStatus(kind, text) {
     $('#status').dataset.kind = kind;
     $('#stext').textContent = text.replace(/(…|\.\.\.)$/, '');
@@ -451,8 +408,7 @@
     clearTimeout(timer);
     timer = setTimeout(() => {
       if (!connected) {
-        setStatus('err', "Can't connect. Check the tips below, then scan again.");
-        $('#help').open = true;
+        setStatus('err', "Can't connect. Make sure both devices are on the same Wi-Fi, then scan again.");
       }
     }, 15000);
 
